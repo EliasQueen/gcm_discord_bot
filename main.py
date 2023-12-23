@@ -37,6 +37,14 @@ client = MyClient(intents=intents)
 db_controller = database_controller()
 cd_controller = commission_data_controller()
 
+# @client.tree.command()
+# async def buttons(interaction: discord.Interaction):
+#     # Create a button
+    
+
+#     # Send a message with the button component
+#     await interaction.response.send_message("This is a message with a button!", view=view)
+
 @client.event
 async def on_ready():
     print(f'Logged in as {client.user} (ID: {client.user.id})')
@@ -61,19 +69,21 @@ async def hello(interaction: discord.Interaction):
     Choice(name = 'Sumeru', value = 4),
     Choice(name = 'Fontaine', value = 5),
 ])
-async def listar(interaction: discord.Interaction, pais: int):
+async def listar(interaction: discord.Interaction, pais: int, detalhada: bool = False):
     language_id = check_language(str(interaction.locale))
-    msg = db_controller.readCommissionList(interaction.user.id, pais, language_id)
-    # print(msg)
-    # commission_list_handler(msg)
-
-    embed = cd_controller.commission_list_embed_creator(interaction, pais)
     
-    await interaction.response.send_message(embed=embed)
-    # msg = controller.readCommissionList(pais)
-    # await interaction.response.send_message(msg)
-    # await interaction.response.send_message(f"{interaction.user.id}, {pais}, {language_id}")
-    # await interaction.response.send_message("...")
+    if(not detalhada):
+        msg = db_controller.readShortCommissionList(interaction.user.id, pais)
+        commission_list = cd_controller.short_commission_list_handler(msg)
+        view = cd_controller.commission_list_view_creator()
+        embed = cd_controller.commission_list_embed_creator(interaction, pais, commission_list, short=True)
+    else:
+        msg = db_controller.readCommissionList(interaction.user.id, pais, language_id)
+        commission_list = cd_controller.commission_list_handler(msg)
+        view = cd_controller.commission_list_view_creator(1, 5)
+        embed = cd_controller.commission_list_embed_creator(interaction, pais, commission_list)
+    
+    await interaction.response.send_message(embed=embed, view=view)
 
 
 @client.tree.command()

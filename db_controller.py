@@ -36,6 +36,32 @@ class database_controller():
                 return "Nenhuma comissão encontrada"  # Chama novamente para obter os dados recém-gerados
         except Exception as e:
             return f"Erro ao ler dados de comissões do banco de dados: {e}"
+    
+    def readShortCommissionList(self, user_id, country_id):
+        self.readCommissionData(user_id)
+        try:
+            sql_query = """
+                SELECT
+                    SUM(c.frequency) AS commission_frequency,
+                    SUM(uc.occurrence) AS commission_occurrence,
+                    SUM(uc.blocked) AS commission_blocked
+                FROM
+                    commissions_languages AS cl
+                    LEFT JOIN commissions c ON cl.commission_id = c.id
+                    LEFT JOIN users_commissions uc ON cl.commission_id = uc.commission_id AND uc.user_id = ?
+                WHERE
+                    cl.commission_id IN (SELECT id FROM commissions WHERE country = ?)
+                    AND cl.language_id = 2;
+            """
+            cursor = self.con.execute(sql_query, (user_id, country_id,))
+            row = cursor.fetchone()
+
+            if row:
+                return f"{row[0]}\t{row[1]}\t{row[2]}"
+            else:
+                return "Nenhuma comissão encontrada"  # Chama novamente para obter os dados recém-gerados
+        except Exception as e:
+            return f"Erro ao ler dados de comissões do banco de dados: {e}"
 
     # def readCommissionList(self, country_id, language_id):
     #     try:
